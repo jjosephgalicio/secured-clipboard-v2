@@ -991,24 +991,29 @@ button {
    Editor Isolation (from Brutalist)
    ============================== */
 
-.editor {
+/* Quill takes over #editor — these rules target Quill's injected
+   .ql-container (scrollable wrapper) and .ql-editor (text area). */
+.editor .ql-container {
   font-family: Arial, sans-serif;
   font-weight: normal;
-  text-transform: none;
-
-  padding: 10px;
-  min-height: 120px;
-  max-height: 220px;
-  overflow-y: auto;
-
-  outline: none;
-
   font-size: 14px;
   line-height: 1.4;
+
+  border: none; /* override Quill snow's default border */
+  max-height: 220px;
+  overflow-y: auto;
 }
 
-/* Prevent brutalist inheritance */
-.editor * {
+.editor .ql-editor {
+  padding: 10px;
+  min-height: 120px;
+  outline: none;
+  text-transform: none; /* override .modal-content uppercase */
+  font-family: Arial, sans-serif;
+  font-weight: normal;
+}
+
+.editor .ql-editor * {
   text-transform: none;
 }
 
@@ -1027,61 +1032,16 @@ button {
 }
 
 /* ==============================
-   Placeholder
+   Placeholder — match prior monospace-bold gray style
    ============================== */
 
-.editor:empty::before {
-  content: attr(placeholder);
+.editor .ql-editor.ql-blank::before {
   color: #7b7b7b;
-  pointer-events: none;
   font-family: monospace;
   font-weight: bold;
+  font-style: normal; /* override Quill snow default italic */
   font-size: 14px;
-}
-
-/* ==============================
-   Text Formatting
-   ============================== */
-
-.editor b,
-.editor strong {
-  font-weight: 700;
-}
-
-.editor i,
-.editor em {
-  font-style: italic;
-}
-
-.editor u {
-  text-decoration: underline;
-}
-
-/* ==============================
-   Tables (Clipboard Friendly)
-   ============================== */
-
-.editor table {
-  border-collapse: collapse;
-  width: 100%;
-}
-
-.editor th,
-.editor td {
-  border: 1px solid #ccc;
-  padding: 6px;
-  vertical-align: top;
-}
-
-/* Preserve formatting inside tables */
-.editor table b,
-.editor table strong {
-  font-weight: 700;
-}
-
-.editor table i,
-.editor table em {
-  font-style: italic;
+  left: 10px; /* align with .ql-editor padding */
 }
 
 /* =========================

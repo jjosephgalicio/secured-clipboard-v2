@@ -21,6 +21,7 @@ const tabBar = document.getElementById("tabBar");
 let currentActiveTab = null;
 let selectedSmartFieldType = null;
 let selectedSmartFieldFormat = null;
+let quillEditor = null;
 
 // Reset both databases
 // async function resetDatabases() {
@@ -542,18 +543,14 @@ addForm.addEventListener("submit", async (e) => {
 
   const label = addLabel.value.trim();
 
-  const editor = document.getElementById("editor");
-
-  // sanitize pasted HTML
-  let cleanHTML = DOMPurify.sanitize(editor.innerHTML);
+  // Quill normalizes pasted Word HTML via its clipboard module, so cleanWordHTML
+  // (which strips ALL inline styles) would destroy Quill's color/background
+  // formatting — DOMPurify alone is sufficient on Quill's output.
+  let cleanHTML = DOMPurify.sanitize(quillEditor.root.innerHTML);
 
   const color = addColor.value;
-  if (!cleanHTML) return;
+  if (!cleanHTML || quillEditor.getText().trim() === "") return;
 
-  // clean Word junk
-  cleanHTML = cleanWordHTML(cleanHTML);
-
-  // encode the sanitized content
   const encoded = encodeBase64(cleanHTML);
 
   // Use active tab context (default to General if none)
@@ -579,8 +576,7 @@ addForm.addEventListener("submit", async (e) => {
   await buildSearchIndex(); // refresh search index
   // Reset form
   addLabel.value = "";
-  // addInput.value = "";
-  document.getElementById("editor").innerHTML = "";
+  quillEditor.setContents([]);
   modal.style.display = "none";
 
   console.log("tabContext2:", tabContext);
@@ -733,7 +729,7 @@ document.addEventListener("DOMContentLoaded", () => {
   initTabsAndItems();
   initSmartFields();
   initInstallImageZoom();
-  initClipboardEditor();
+  initQuillEditor();
   initTabScroll();
 });
 
@@ -1347,17 +1343,11 @@ function initInstallImageZoom() {
   });
 }
 
-// Enable Preserve Rich Text Formatting
-function initClipboardEditor() {
-  const editor = document.getElementById("editor");
-
-  editor.addEventListener("paste", (e) => {
-    const html = e.clipboardData.getData("text/html");
-
-    if (html) {
-      e.preventDefault();
-      document.execCommand("insertHTML", false, html);
-    }
+function initQuillEditor() {
+  quillEditor = new Quill("#editor", {
+    modules: { toolbar: false },
+    placeholder: "Paste plain or formatted text content...",
+    theme: "snow",
   });
 }
 
