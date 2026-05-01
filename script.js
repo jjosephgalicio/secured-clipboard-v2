@@ -1353,25 +1353,18 @@ function initQuillEditor() {
   Quill.register(Size, true);
   Quill.register(Font, true);
 
-  // quill-better-table preserves complex tables on paste (Word grids, etc.).
-  Quill.register(
-    { "modules/better-table": window.quillBetterTable },
-    true,
-  );
+  // NOTE: quill-better-table is loaded in HTML but not registered here. Its UMD
+  // export shape doesn't match Quill 1.3.7's module API in our setup — registering
+  // it crashed initQuillEditor (TypeError on .pop() inside the better-table
+  // constructor), which left quillEditor null and broke save. Tables paste in
+  // linearized form (cells become stacked paragraphs) but every other format
+  // (color, background, bold, italic, underline, font-size, images) survives.
+  // See follow-up to revisit better-table integration or swap to Quill 2.x.
 
   quillEditor = new Quill("#editor", {
     placeholder: "Paste plain or formatted text content...",
     theme: "snow",
-    modules: {
-      toolbar: false,
-      table: false,
-      "better-table": {
-        operationMenu: { items: {} },
-      },
-      keyboard: {
-        bindings: window.quillBetterTable.keyboardBindings,
-      },
-    },
+    modules: { toolbar: false },
   });
 }
 
