@@ -1,0 +1,281 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#000000" />
+    <title>Secured Clipboard App</title>
+    <link rel="icon" type="image/png" href="/assets/logo.png" />
+    <link rel="stylesheet" href="style.css" />
+    <link href="/libs/quill.snow.css" rel="stylesheet" />
+    <link href="/libs/quill-better-table.css" rel="stylesheet" />
+    <script src="/libs/purify.min.js" defer></script>
+    <script src="/libs/quill.min.js" defer></script>
+    <script src="/libs/quill-better-table.min.js" defer></script>
+    <script src="/libs/pouchdb.min.js" defer></script>
+    <script src="/libs/date-fns.min.js" defer></script>
+    <link rel="manifest" href="/manifest.json" />
+    <link rel="preload" href="/fonts/WorkSans-Regular.woff2" as="font" type="font/woff2" crossorigin>
+  </head>
+
+  <body>
+    <div id="boot-loader">
+      <div class="grid"></div>
+      <div class="boot-content">
+        <div class="logo">SC</div>
+        <div class="progress">
+          <div class="progress-bar"></div>
+        </div>
+        <div class="boot-text">Decrypting your data...</div>
+      </div>
+    </div>
+    <div id="networkBanner" class="network-banner offline">
+      🔴 You're offline
+    </div>
+    <!-- your app -->
+    <div id="app">
+      <header>
+        <h2>Secured Clipboard</h2>
+        <div class="top-actions">
+          <button title="Search Item" id="searchBtn">
+            <span class="search-icon-btn">
+              <svg
+                viewBox="0 0 24 24"
+                width="18"
+                height="18"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="3"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <circle cx="11" cy="12" r="7"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+              </svg>
+            </span>
+          </button>
+          <button title="Install Page As App" id="installationBtn">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="3"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="7 10 12 15 17 10" />
+              <line x1="12" y1="15" x2="12" y2="3" />
+            </svg>
+          </button>
+          <!-- <button title="Preferences" id="settingsBtn">⚙️</button> -->
+          <button title="Toggle Dark Mode" id="toggleDarkMode">🌙</button>
+          <!-- <button id="openModalBtn">➕ Add Item</button> -->
+        </div>
+      </header>
+
+      <div class="tabs-container">
+        <div class="tabs" id="tabBar">
+          <!-- Tabs will be rendered dynamically -->
+        </div>
+        <button title="Add New Tab" id="newTabBtn" class="tab add-tab">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="12"
+            height="12"
+            viewBox="0 0 16 16"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="3"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            style="vertical-align: middle; margin-right: 0px"
+          >
+            <line x1="8" y1="2" x2="8" y2="14" />
+            <line x1="2" y1="8" x2="14" y2="8" />
+          </svg>
+        </button>
+      </div>
+
+      <div class="mid-actions">
+        <button title="Add New Item" id="openModalBtn">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="12"
+            height="12"
+            viewBox="0 0 16 16"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="3"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            style="vertical-align: middle; margin-right: 6px"
+          >
+            <line x1="8" y1="2" x2="8" y2="14" />
+            <line x1="2" y1="8" x2="14" y2="8" />
+          </svg>
+          Add Item
+        </button>
+      </div>
+
+      <div class="list-container">
+        <div class="list" id="itemList">
+          <!-- Encrypted items appear here -->
+        </div>
+      </div>
+      <div class="bottom-actions">
+        <input type="file" id="importFile" style="display: none" />
+        <button id="importBtn">Import</button>
+        <button id="exportBtn">Export</button>
+      </div>
+      <h6 style="color: gray">Crafted & Developed by JJ Galicio © 2026</h6>
+
+      <!-- Add Item Modal -->
+      <div id="modal" class="modal">
+        <div class="modal-content">
+          <span class="close" id="closeModalBtn">&times;</span>
+          <h3>Add New Item</h3>
+          <form id="addForm">
+            <input type="hidden" id="smartFormatInput" name="smartFormat" />
+            <div class="form-row">
+              <textarea
+                id="addLabel"
+                placeholder="Enter label..."
+                required
+              ></textarea>
+              <input
+                type="color"
+                id="addColor"
+                name="addColor"
+                value="#0044cc"
+              />
+            </div>
+
+            <div class="editor-wrapper">
+              <div
+                id="editor"
+                contenteditable="true"
+                class="editor"
+                placeholder="Paste plain or formatted text content..."
+              ></div>
+            </div>
+            <!--           
+          <textarea
+            id="addInput"
+            placeholder="Enter text..."
+            required
+          ></textarea> -->
+
+            <!-- Enable Smart Mode Toggle -->
+            <div class="form-row">
+              <label class="toggle-label">
+                ⚡ Enable Smart Mode
+                <input
+                  type="checkbox"
+                  id="enableFormula"
+                  class="toggle-input"
+                />
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+
+            <!-- Formula Options (hidden initially) -->
+            <div id="formulaOptions" style="display: none">
+              <!-- Formula Type -->
+              <div class="form-row">
+                <!-- <label for="formulaType">Type:</label> -->
+                <div class="dropdown" id="formulaType">
+                  <button class="dropdown-toggle">DATE</button>
+                  <ul class="dropdown-menu">
+                    <li data-value="date">DATE</li>
+                    <!-- Future: add more types here -->
+                  </ul>
+                </div>
+                <div class="dropdown" id="dateFormatDropdown">
+                  <button class="dropdown-toggle">Select Format</button>
+                  <ul class="dropdown-menu" id="dateFormatMenu">
+                    <!-- JS will populate with examples -->
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            <!-- Tab context label -->
+            <div class="form-row">
+              <label id="activeTabLabel" class="tab-context-label"
+                >General</label
+              >
+            </div>
+
+            <button type="submit" id="addBtn">Save</button>
+          </form>
+        </div>
+      </div>
+
+      <!-- Tab Modal -->
+      <div id="tabModal" class="modal">
+        <div class="modal-content">
+          <span class="close" id="closeTabModalBtn">&times;</span>
+          <h3>Add New Tab</h3>
+          <form id="addTabForm">
+            <div class="form-row">
+              <textarea
+                id="tabName"
+                placeholder="Enter tab name..."
+                required
+              ></textarea>
+              <input
+                type="color"
+                id="tabColor"
+                name="tabColor"
+                value="#3498db"
+              />
+            </div>
+            <button type="submit" id="addTabBtn">Save Tab</button>
+          </form>
+        </div>
+      </div>
+
+      <!-- Installation Screenshot Modal -->
+      <div id="installModal" class="modal">
+        <div class="modal-content install-modal">
+          <span class="close" id="closeInstallModal">&times;</span>
+
+          <h3>Install Site as an App</h3>
+
+          <div id="panzoom-wrapper">
+            <img
+              id="installImage"
+              src="/assets/Install App as PWA (Edge).png"
+              alt="Installation guide showing how to install the Secured Clipboard app from the browser menu"
+            />
+          </div>
+
+          <p class="zoom-hint">Pinch or Scroll to Zoom</p>
+        </div>
+      </div>
+
+      <!-- Spotlight Search Modal -->
+      <div id="searchModal" class="search-modal">
+        <div class="search-box">
+          <div class="search-header">
+            <input
+              id="searchInput"
+              placeholder="Search clipboard... (CTRL + K)"
+            />
+            <button id="closeSearchBtn">✕</button>
+          </div>
+
+          <div id="searchResults"></div>
+        </div>
+      </div>
+
+      <script src="/libs/panzoom.min.js" defer></script>
+      <script src="/libs/fuse-7.0.0.js" defer></script>
+      <script src="script.js" defer></script>
+    </div>
+  </body>
+</html>
