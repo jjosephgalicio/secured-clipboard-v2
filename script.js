@@ -22,19 +22,6 @@ let currentActiveTab = null;
 let selectedSmartFieldType = null;
 let selectedSmartFieldFormat = null;
 
-window.addEventListener("load", () => {
-  setTimeout(() => {
-    const loader = document.getElementById("boot-loader");
-
-    loader.style.opacity = "0";
-    loader.style.transition = "opacity 0.5s";
-
-    setTimeout(() => {
-      loader.remove();
-    }, 500);
-  }, 5000); // 5 seconds
-});
-
 // Reset both databases
 // async function resetDatabases() {
 //   try {
@@ -470,7 +457,16 @@ async function copyRichText(html) {
   const temp = document.createElement("div");
   temp.innerHTML = html;
 
-  const plainText = temp.innerText;
+  // Attach off-screen so innerText honors block/<br> line breaks per CSS rules
+  // (detached elements produce inconsistent results across browsers).
+  temp.style.position = "fixed";
+  temp.style.left = "-9999px";
+  temp.style.top = "0";
+  document.body.appendChild(temp);
+  // contenteditable structures like <div><br>line</div> emit \n\n for one visual
+  // line break — collapse to single newlines for plain-text paste targets.
+  const plainText = temp.innerText.replace(/\n{2,}/g, "\n");
+  document.body.removeChild(temp);
 
   const blobHTML = new Blob([html], { type: "text/html" });
   const blobText = new Blob([plainText], { type: "text/plain" });
@@ -1584,18 +1580,4 @@ function updateNetworkStatus() {
 window.addEventListener("online", updateNetworkStatus);
 window.addEventListener("offline", updateNetworkStatus);
 
-window.addEventListener("load", () => {
-  setTimeout(() => {
-    const loader = document.getElementById("boot-loader");
-
-    loader.style.opacity = "0";
-    loader.style.transition = "opacity 0.5s";
-
-    setTimeout(() => {
-      loader.remove();
-
-      // ✅ SHOW NETWORK BANNER AFTER LOADER
-      updateNetworkStatus();
-    }, 500);
-  }, 5000);
-});
+updateNetworkStatus();
