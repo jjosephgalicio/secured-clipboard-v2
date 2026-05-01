@@ -734,7 +734,54 @@ document.addEventListener("DOMContentLoaded", () => {
   initSmartFields();
   initInstallImageZoom();
   initClipboardEditor();
+  initTabScroll();
 });
+
+function initTabScroll() {
+  const tabBar = document.getElementById("tabBar");
+  const leftBtn = document.getElementById("tabScrollLeft");
+  const rightBtn = document.getElementById("tabScrollRight");
+  if (!tabBar || !leftBtn || !rightBtn) return;
+
+  function update() {
+    const canLeft = tabBar.scrollLeft > 1;
+    const canRight =
+      tabBar.scrollLeft + tabBar.clientWidth < tabBar.scrollWidth - 1;
+    leftBtn.classList.toggle("visible", canLeft);
+    rightBtn.classList.toggle("visible", canRight);
+  }
+
+  function scrollByPage(direction) {
+    const delta = Math.max(80, tabBar.clientWidth * 0.8) * direction;
+    tabBar.scrollBy({ left: delta, behavior: "smooth" });
+  }
+
+  leftBtn.addEventListener("click", () => scrollByPage(-1));
+  rightBtn.addEventListener("click", () => scrollByPage(1));
+
+  // Vertical mouse wheel → horizontal scroll on the tab bar
+  tabBar.addEventListener(
+    "wheel",
+    (e) => {
+      if (e.deltaY === 0 || Math.abs(e.deltaX) > Math.abs(e.deltaY)) return;
+      e.preventDefault();
+      tabBar.scrollLeft += e.deltaY;
+    },
+    { passive: false },
+  );
+
+  tabBar.addEventListener("scroll", update);
+
+  if (typeof ResizeObserver !== "undefined") {
+    new ResizeObserver(update).observe(tabBar);
+  }
+  new MutationObserver(update).observe(tabBar, {
+    childList: true,
+    subtree: true,
+  });
+
+  update();
+}
 
 // IMPORT EXPORT
 async function exportDB() {

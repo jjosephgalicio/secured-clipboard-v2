@@ -682,6 +682,13 @@ button {
   /* border-bottom: 1px solid #ddd; */
 }
 
+.tabs-scroll {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  display: flex;
+}
+
 .tabs {
   flex: 1;
   display: inline-flex;
@@ -696,6 +703,57 @@ button {
 
 .tabs::-webkit-scrollbar {
   display: none; /* Chrome, Safari, Opera */
+}
+
+.tab-scroll-btn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 2;
+
+  width: 28px;
+  height: 28px;
+  padding: 0;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background: var(--tab-bg-color);
+  color: var(--text);
+  border: 2px solid var(--text);
+  box-shadow: 2px 2px 0 #00a4ef;
+  border-radius: 5px;
+
+  cursor: pointer;
+
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s ease;
+}
+
+.tab-scroll-btn.visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.tab-scroll-btn.left {
+  left: 0;
+}
+
+.tab-scroll-btn.right {
+  right: 0;
+}
+
+.tab-scroll-btn:active {
+  transform: translateY(-50%) translate(1px, 1px);
+  box-shadow: 1px 1px 0 #00a4ef;
+}
+
+@media (pointer: coarse) {
+  .tab-scroll-btn {
+    display: none;
+  }
 }
 
 .tab {

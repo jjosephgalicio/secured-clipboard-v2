@@ -68,8 +68,48 @@
       </header>
 
       <div class="tabs-container">
-        <div class="tabs" id="tabBar">
-          <!-- Tabs will be rendered dynamically -->
+        <div class="tabs-scroll">
+          <button
+            type="button"
+            class="tab-scroll-btn left"
+            id="tabScrollLeft"
+            aria-label="Scroll tabs left"
+          >
+            <svg
+              viewBox="0 0 16 16"
+              width="12"
+              height="12"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="3"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <polyline points="10 4 5 8 10 12" />
+            </svg>
+          </button>
+          <div class="tabs" id="tabBar">
+            <!-- Tabs will be rendered dynamically -->
+          </div>
+          <button
+            type="button"
+            class="tab-scroll-btn right"
+            id="tabScrollRight"
+            aria-label="Scroll tabs right"
+          >
+            <svg
+              viewBox="0 0 16 16"
+              width="12"
+              height="12"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="3"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <polyline points="6 4 11 8 6 12" />
+            </svg>
+          </button>
         </div>
         <button title="Add New Tab" id="newTabBtn" class="tab add-tab">
           <svg
