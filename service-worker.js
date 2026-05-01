@@ -1,13 +1,17 @@
-const CACHE_NAME = "secure-clipboard-v1";
+// Bump APP_VERSION on each release to invalidate the app shell cache.
+const APP_VERSION = "v2";
+const APP_CACHE = `secure-clipboard-${APP_VERSION}`;
+const RUNTIME_CACHES = ["assets-cache", "font-cache"];
+const KNOWN_CACHES = new Set([APP_CACHE, ...RUNTIME_CACHES]);
 
-const ASSETS = [
+const APP_SHELL = [
   "/",
   "/manifest.json",
   "/index.html",
   "/style.css",
   "/script.js",
 
-  // libs (based on your actual paths)
+  // libs
   "/libs/pouchdb.min.js",
   "/libs/date-fns.min.js",
   "/libs/quill.min.js",
@@ -17,72 +21,88 @@ const ASSETS = [
   "/libs/panzoom.min.js",
   "/libs/fuse-7.0.0.js",
 
-  // ✅ fonts (IMPORTANT)
-  "/fonts/WorkSans-Regular.woff2",
-  "/fonts/WorkSans-Semibold.woff2",
-  "/fonts/WorkSans-Bold.woff2",
+  // fonts (lowercase to match disk — Linux is case-sensitive)
+  "/fonts/worksans-regular.woff2",
+  "/fonts/worksans-semibold.woff2",
+  "/fonts/worksans-bold.woff2",
 
-  // optional
+  // assets
   "/assets/logo.png",
   "/assets/install app as pwa (edge).png",
 ];
 
-// install → cache app shell
 self.addEventListener("install", (e) => {
-  e.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS)));
-});
-
-// activate
-self.addEventListener("activate", () => {
-  self.clients.claim();
-});
-
-// fetch → cache-first with fallback
-
-self.addEventListener("fetch", (e) => {
-  const url = new URL(e.request.url);
-
-  // 🖼️ Cache images dynamically
-  if (url.pathname.startsWith("/assets/")) {
-    e.respondWith(
-      caches.open("assets-cache").then(async (cache) => {
-        const cached = await cache.match(e.request);
-        if (cached) return cached;
-
-        try {
-          const res = await fetch(e.request);
-          const resClone = res.clone(); // 🔥 clone immediately
-          await cache.put(e.request, resClone);
-          return res;
-        } catch {
-          // optional fallback
-          return new Response("", { status: 404 });
-        }
-      }),
-    );
-    return;
-  }
-
-  // 🎯 Handle fonts specifically
-  if (url.pathname.startsWith("/fonts/")) {
-    e.respondWith(
-      caches.open("font-cache").then(async (cache) => {
-        const cached = await cache.match(e.request);
-        if (cached) return cached;
-
-        const res = await fetch(e.request);
-        const resClone = res.clone(); // 🔥 important
-        await cache.put(e.request, resClone);
-        return res;
-      }),
-    );
-    return;
-  }
-
-  // default behavior
-  e.respondWith(
-    caches.match(e.request).then((res) => {
-      return res || fetch(e.request).catch(() => caches.match("/index.html"));
-    }),
+  e.waitUntil(
+    caches
+      .open(APP_CACHE)
+      .then((cache) => cache.addAll(APP_SHELL))
+      .then(() => self.skipWaiting()),
   );
 });
+
+self.addEventListener("activate", (e) => {
+  e.waitUntil(
+    caches
+      .keys()
+      .then((keys) =>
+        Promise.all(
+          keys.filter((k) => !KNOWN_CACHES.has(k)).map((k) => caches.delete(k)),
+        ),
+      )
+      .then(() => self.clients.claim()),
+  );
+});
+
+self.addEventListener("fetch", (e) => {
+  if (e.request.method !== "GET") return;
+
+  const url = new URL(e.request.url);
+  if (url.origin !== self.location.origin) return;
+
+  if (url.pathname.startsWith("/assets/")) {
+    e.respondWith(cacheFirst(e.request, "assets-cache"));
+    return;
+  }
+  if (url.pathname.startsWith("/fonts/")) {
+    e.respondWith(cacheFirst(e.request, "font-cache"));
+    return;
+  }
+  if (url.pathname.startsWith("/libs/")) {
+    e.respondWith(cacheFirst(e.request, APP_CACHE));
+    return;
+  }
+
+  // App shell (HTML / script.js / style.css / manifest): network-first so deploys
+  // reach users on next reload; falls back to cache when offline.
+  e.respondWith(networkFirst(e.request, APP_CACHE));
+});
+
+async function cacheFirst(request, cacheName) {
+  const cache = await caches.open(cacheName);
+  const cached = await cache.match(request);
+  if (cached) return cached;
+  try {
+    const res = await fetch(request);
+    if (res.ok) cache.put(request, res.clone());
+    return res;
+  } catch {
+    return new Response("", { status: 504 });
+  }
+}
+
+async function networkFirst(request, cacheName) {
+  const cache = await caches.open(cacheName);
+  try {
+    const res = await fetch(request);
+    if (res.ok) cache.put(request, res.clone());
+    return res;
+  } catch {
+    const cached = await cache.match(request);
+    if (cached) return cached;
+    if (request.mode === "navigate") {
+      const indexCached = await cache.match("/index.html");
+      if (indexCached) return indexCached;
+    }
+    return new Response("", { status: 504 });
+  }
+}

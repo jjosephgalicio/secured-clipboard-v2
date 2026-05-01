@@ -1,7 +1,7 @@
 const assets = [
-  "/fonts/WorkSans-Regular.woff2",
-  "/fonts/WorkSans-Semibold.woff2",
-  "/fonts/WorkSans-Bold.woff2",
+  "/fonts/worksans-regular.woff2",
+  "/fonts/worksans-semibold.woff2",
+  "/fonts/worksans-bold.woff2",
 ];
 
 const db = new PouchDB("secure_clipboard");
