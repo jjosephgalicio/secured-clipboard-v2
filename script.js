@@ -1344,10 +1344,34 @@ function initInstallImageZoom() {
 }
 
 function initQuillEditor() {
+  // Switch size & font from class-based (bucketed) to style-based (exact px/family)
+  // so pasted Word content keeps its actual sizes, not Quill's small/normal/large.
+  const Size = Quill.import("attributors/style/size");
+  const Font = Quill.import("attributors/style/font");
+  Size.whitelist = null;
+  Font.whitelist = null;
+  Quill.register(Size, true);
+  Quill.register(Font, true);
+
+  // quill-better-table preserves complex tables on paste (Word grids, etc.).
+  Quill.register(
+    { "modules/better-table": window.quillBetterTable },
+    true,
+  );
+
   quillEditor = new Quill("#editor", {
-    modules: { toolbar: false },
     placeholder: "Paste plain or formatted text content...",
     theme: "snow",
+    modules: {
+      toolbar: false,
+      table: false,
+      "better-table": {
+        operationMenu: { items: {} },
+      },
+      keyboard: {
+        bindings: window.quillBetterTable.keyboardBindings,
+      },
+    },
   });
 }
 
